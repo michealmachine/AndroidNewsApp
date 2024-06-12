@@ -101,4 +101,5 @@ dependencies {
 
     implementation("androidx.compose.material:material-icons-core:1.1.0")
     implementation("androidx.compose.material:material-icons-extended:1.1.0")
+    implementation("androidx.compose.material:material")
 }

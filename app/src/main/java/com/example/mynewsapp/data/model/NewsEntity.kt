@@ -13,5 +13,17 @@ data class NewsEntity(
     val urlToImage: String?,
     val publishedAt: String?,
     val content: String?,
-    val country: String
+    val country: String,
+    var isFavorite: Boolean = false
+)
+@Entity(tableName = "favorites")
+data class FavoriteNewsEntity(
+    @PrimaryKey val url: String,
+    val title: String,
+    val description: String?,
+    val author: String?,
+    val sourceName: String,
+    val urlToImage: String?,
+    val publishedAt: String?,
+    val content: String?
 )

@@ -1,7 +1,9 @@
 package com.example.mynewsapp.data.repository
 
 import android.util.Log
+import com.example.mynewsapp.data.local.FavoriteNewsDao
 import com.example.mynewsapp.data.local.NewsDao
+import com.example.mynewsapp.data.model.FavoriteNewsEntity
 import com.example.mynewsapp.data.model.NewsEntity
 import com.example.mynewsapp.data.remote.NewsApiService
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +14,8 @@ import javax.inject.Inject
 
 class NewsRepository @Inject constructor(
     private val newsApiService: NewsApiService,
-    private val newsDao: NewsDao
+    private val newsDao: NewsDao,
+    private val favoriteNewsDao: FavoriteNewsDao
 ) {
     fun getNews(country: String): Flow<List<NewsEntity>> {
         return newsDao.getNewsDirectly(country)
@@ -33,15 +36,56 @@ class NewsRepository @Inject constructor(
                         urlToImage = article.urlToImage,
                         publishedAt = article.publishedAt,
                         content = article.content,
-                        country = country // 设置国家
+                        country = country
                     )
                 }
                 newsDao.insertNews(newsEntities)
             } catch (e: Exception) {
                 Log.e("NewsRepository", "Failed to refresh news", e)
-                // Handle error
             }
         }
         return newsEntities
     }
+
+    fun getFavoriteNews(): Flow<List<FavoriteNewsEntity>> {
+        return favoriteNewsDao.getFavoriteNews()
+    }
+
+    suspend fun addFavorite(news: NewsEntity) {
+        val favoriteNews = FavoriteNewsEntity(
+            url = news.url,
+            title = news.title,
+            description = news.description,
+            author = news.author,
+            sourceName = news.sourceName,
+            urlToImage = news.urlToImage,
+            publishedAt = news.publishedAt,
+            content = news.content
+        )
+        favoriteNewsDao.insertFavorite(favoriteNews)
+    }
+
+    suspend fun removeFavorite(news: NewsEntity) {
+        val favoriteNews = FavoriteNewsEntity(
+            url = news.url,
+            title = news.title,
+            description = news.description,
+            author = news.author,
+            sourceName = news.sourceName,
+            urlToImage = news.urlToImage,
+            publishedAt = news.publishedAt,
+            content = news.content
+        )
+        favoriteNewsDao.deleteFavorite(favoriteNews)
+    }
+
+    fun isFavorite(url: String): Flow<Boolean> {
+        return favoriteNewsDao.isFavorite(url)
+    }
+
+    suspend fun clearAllNews() {
+        newsDao.clearAllNews()
+    }
 }
+
+

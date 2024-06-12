@@ -21,6 +21,7 @@ import androidx.navigation.navArgument
 import com.example.mynewsapp.data.model.NewsEntity
 import com.example.mynewsapp.data.remote.NewsApiService
 import com.example.mynewsapp.data.repository.NewsRepository
+import com.example.mynewsapp.ui.AppNavigation
 import com.example.mynewsapp.ui.NewsViewModel
 import com.example.mynewsapp.ui.screen.NewsDetailScreen
 import com.example.mynewsapp.ui.screen.NewsScreen
@@ -38,16 +39,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MyNewsAppTheme {
-                val navController = rememberNavController()
                 val viewModel: NewsViewModel = hiltViewModel()
-                NavHost(navController = navController, startDestination = "news") {
-                    composable("news") {
-                        NewsScreen(navController, viewModel)
-                    }
-                    composable("newsDetail") {
-                        NewsDetailScreen(navController, viewModel)
-                    }
-                }
+                AppNavigation(viewModel = viewModel)
             }
 
         }

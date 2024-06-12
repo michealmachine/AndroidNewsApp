@@ -3,6 +3,7 @@ package com.example.mynewsapp.ui
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mynewsapp.data.model.FavoriteNewsEntity
 import com.example.mynewsapp.data.model.NewsEntity
 import com.example.mynewsapp.data.preferences.UserPreferences
 import com.example.mynewsapp.data.repository.NewsRepository
@@ -35,22 +36,31 @@ class NewsViewModel @Inject constructor(
     private val _newsUpdateCount = MutableSharedFlow<Int>()
     val newsUpdateCount: SharedFlow<Int> = _newsUpdateCount.asSharedFlow()
 
+    val selectedNewsIsFavorite: StateFlow<Boolean> = _selectedNews.flatMapLatest { news ->
+        news?.let { repository.isFavorite(it.url) } ?: flowOf(false)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
+
+    val favorites: StateFlow<List<FavoriteNewsEntity>> = repository.getFavoriteNews()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+
     init {
-        // 初始化时加载新闻和用户偏好
         loadUserPreferences()
         loadNews(_viewState.value.selectedCountry)
     }
 
     private fun loadNews(country: String) {
         viewModelScope.launch {
-            _viewState.update { it.copy(isLoading = true) } // ���置加载状态为 true
+            _viewState.update { it.copy(isLoading = true) }
             repository.getNews(country)
                 .collect { news ->
                     val filteredNews = news.filter {
                         it.title.contains(_viewState.value.searchQuery, ignoreCase = true) ||
-                                it.description?.contains(_viewState.value.searchQuery, ignoreCase = true) == true
+                                it.description?.contains(
+                                    _viewState.value.searchQuery,
+                                    ignoreCase = true
+                                ) == true
                     }
-                    _viewState.update { it.copy(newsList = filteredNews, isLoading = false) } // 设置加载状态为 false
+                    _viewState.update { it.copy(newsList = filteredNews, isLoading = false) }
                 }
         }
     }
@@ -65,9 +75,9 @@ class NewsViewModel @Inject constructor(
 
     fun refreshNews() {
         viewModelScope.launch {
-            _viewState.update { it.copy(isLoading = true) } // 设置加载状态为 true
+            _viewState.update { it.copy(isLoading = true) }
             val newNewsList = repository.refreshNews(_viewState.value.selectedCountry)
-            _viewState.update { it.copy(isLoading = false) } // 设置加载状态为 false
+            _viewState.update { it.copy(isLoading = false) }
             _newsUpdateCount.emit(newNewsList.size)
         }
     }
@@ -90,9 +100,23 @@ class NewsViewModel @Inject constructor(
     }
 
     fun updateSelectedCountry(country: String) {
-        _viewState.update { it.copy(selectedCountry = country) } // 清空旧的新闻数据
+        _viewState.update { it.copy(selectedCountry = country) }
+        loadNews(country)
+    }
 
-        loadNews(_viewState.value.selectedCountry)
+    fun toggleFavorite(news: NewsEntity) {
+        viewModelScope.launch {
+            if (selectedNewsIsFavorite.value) {
+                repository.removeFavorite(news)
+            } else {
+                repository.addFavorite(news)
+            }
+        }
+    }
 
+    fun clearCache() {
+        viewModelScope.launch {
+            repository.clearAllNews()
+        }
     }
 }

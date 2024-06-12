@@ -63,9 +63,14 @@ object AppModule {
 
     @Provides
     fun provideNewsDao(database: NewsDatabase) = database.newsDao()
+
+    @Provides
+    fun provideFavoriteNewsDao(database: NewsDatabase) = database.favoriteNewsDao()
+
     @Provides
     @Singleton
     fun provideUserPreferences(@ApplicationContext context: Context): UserPreferences {
         return UserPreferences(context)
     }
+
 }

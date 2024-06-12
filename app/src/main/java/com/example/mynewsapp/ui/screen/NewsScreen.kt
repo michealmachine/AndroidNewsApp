@@ -125,7 +125,7 @@ fun NewsScreen(navController: NavHostController, viewModel: NewsViewModel = hilt
 fun CustomSnackbar(data: SnackbarData) {
     Snackbar(
         modifier = Modifier.padding(16.dp),
-        contentColor = Color.Black // 设置文字颜色
+        contentColor = Color.Blue // 设置文字颜色
     ) {
         Text(text = data.visuals.message)
     }
