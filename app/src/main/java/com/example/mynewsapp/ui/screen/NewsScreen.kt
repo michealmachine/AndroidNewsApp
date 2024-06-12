@@ -34,14 +34,17 @@ import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewsScreen(navController: NavHostController, viewModel: NewsViewModel) {
+fun NewsScreen(navController: NavHostController, viewModel: NewsViewModel = hiltViewModel()) {
     val viewState by viewModel.viewState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val countries = listOf("us", "gb", "fr", "cn", "jp")
+
     LaunchedEffect(Unit) {
         viewModel.newsUpdateCount.collectLatest { count ->
             snackbarHostState.showSnackbar("Updated with $count new articles")
         }
     }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -50,22 +53,39 @@ fun NewsScreen(navController: NavHostController, viewModel: NewsViewModel) {
                     IconButton(onClick = { viewModel.refreshNews() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }
-                    IconButton(onClick = { viewState.isGrid }) {
+                    IconButton(onClick = { viewModel.toggleDisplayFormat() }) {
                         Icon(
                             imageVector = if (viewState.isGrid) Icons.Default.List else Icons.Default.GridOn,
-                            contentDescription = "Toggle Layout",
-                            modifier = Modifier.clickable {
-                                viewModel.toggleDisplayFormat()
-                            }
+                            contentDescription = "Toggle Layout"
                         )
                     }
                 }
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState,
-            snackbar = { data -> CustomSnackbar(data) })}
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState, snackbar = { data -> CustomSnackbar(data) }) }
     ) { paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)) {
+            // Country Selector
+            var expanded by remember { mutableStateOf(false) }
+            Box {
+                TextButton(onClick = { expanded = true }) {
+                    Text(text = viewState.selectedCountry.uppercase())
+                }
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    countries.forEach { country ->
+
+
+                        DropdownMenuItem(text = { Text(text = country.uppercase()) }, onClick = {
+                            viewModel.updateSelectedCountry(country)
+                            expanded = false
+                        })
+                    }
+                }
+            }
+
             TextField(
                 value = viewState.searchQuery,
                 onValueChange = { viewModel.updateSearchQuery(it) },
@@ -74,25 +94,33 @@ fun NewsScreen(navController: NavHostController, viewModel: NewsViewModel) {
                     .fillMaxWidth()
                     .padding(16.dp)
             )
-            if (viewState.isGrid) {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(viewState.newsList) { article ->
-                        NewsItem(navController, article, viewModel)
-                    }
+
+            if (viewState.isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(viewState.newsList) { article ->
-                        NewsItem(navController, article, viewModel)
+                if (viewState.isGrid) {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(viewState.newsList) { article ->
+                            NewsItem(navController, article, viewModel)
+                        }
+                    }
+                } else {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(viewState.newsList) { article ->
+                            NewsItem(navController, article, viewModel)
+                        }
                     }
                 }
             }
         }
     }
 }
+
 @Composable
 fun CustomSnackbar(data: SnackbarData) {
     Snackbar(
@@ -102,6 +130,7 @@ fun CustomSnackbar(data: SnackbarData) {
         Text(text = data.visuals.message)
     }
 }
+
 @Composable
 fun NewsItem(navController: NavHostController, article: NewsEntity, viewModel: NewsViewModel) {
     var isLoading by remember { mutableStateOf(true) }

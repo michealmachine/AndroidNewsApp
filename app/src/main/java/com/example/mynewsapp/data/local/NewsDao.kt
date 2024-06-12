@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NewsDao {
-    @Query("SELECT * FROM news")
-    fun getAllNews(): Flow<List<NewsEntity>>
+    @Query("SELECT * FROM news WHERE country = :country")
+    fun getNewsDirectly(country: String): Flow<List<NewsEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNews(news: List<NewsEntity>)

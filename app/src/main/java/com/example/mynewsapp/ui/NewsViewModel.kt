@@ -15,7 +15,9 @@ import javax.inject.Singleton
 data class NewsViewState(
     val newsList: List<NewsEntity> = emptyList(),
     val searchQuery: String = "",
-    val isGrid: Boolean = false
+    val isGrid: Boolean = false,
+    val selectedCountry: String = "us",
+    val isLoading: Boolean = false // 新增加载状态
 )
 
 @HiltViewModel
@@ -35,18 +37,20 @@ class NewsViewModel @Inject constructor(
 
     init {
         // 初始化时加载新闻和用户偏好
-        loadNews()
         loadUserPreferences()
+        loadNews(_viewState.value.selectedCountry)
     }
 
-    private fun loadNews() {
+    private fun loadNews(country: String) {
         viewModelScope.launch {
-            repository.getNews()
-                .combine(_viewState.map { it.searchQuery }) { news, query ->
-                    news.filter { it.title.contains(query, ignoreCase = true) || it.description?.contains(query, ignoreCase = true) == true }
-                }
-                .collect { filteredNews ->
-                    _viewState.update { it.copy(newsList = filteredNews) }
+            _viewState.update { it.copy(isLoading = true) } // ���置加载状态为 true
+            repository.getNews(country)
+                .collect { news ->
+                    val filteredNews = news.filter {
+                        it.title.contains(_viewState.value.searchQuery, ignoreCase = true) ||
+                                it.description?.contains(_viewState.value.searchQuery, ignoreCase = true) == true
+                    }
+                    _viewState.update { it.copy(newsList = filteredNews, isLoading = false) } // 设置加载状态为 false
                 }
         }
     }
@@ -61,15 +65,16 @@ class NewsViewModel @Inject constructor(
 
     fun refreshNews() {
         viewModelScope.launch {
-            val newNewsList = repository.refreshNews()
+            _viewState.update { it.copy(isLoading = true) } // 设置加载状态为 true
+            val newNewsList = repository.refreshNews(_viewState.value.selectedCountry)
+            _viewState.update { it.copy(isLoading = false) } // 设置加载状态为 false
             _newsUpdateCount.emit(newNewsList.size)
-            Log.d("te",newNewsList.size.toString())
         }
     }
 
-
     fun updateSearchQuery(query: String) {
         _viewState.update { it.copy(searchQuery = query) }
+        loadNews(_viewState.value.selectedCountry)
     }
 
     fun toggleDisplayFormat() {
@@ -79,9 +84,15 @@ class NewsViewModel @Inject constructor(
             _viewState.update { it.copy(isGrid = newIsGrid) }
         }
     }
+
     fun selectNews(news: NewsEntity) {
-        Log.d("test","???")
         _selectedNews.value = news
-        Log.d("ta",_selectedNews.value.toString())
+    }
+
+    fun updateSelectedCountry(country: String) {
+        _viewState.update { it.copy(selectedCountry = country) } // 清空旧的新闻数据
+
+        loadNews(_viewState.value.selectedCountry)
+
     }
 }

@@ -12,5 +12,6 @@ data class NewsEntity(
     val sourceName: String,
     val urlToImage: String?,
     val publishedAt: String?,
-    val content: String?
+    val content: String?,
+    val country: String
 )
