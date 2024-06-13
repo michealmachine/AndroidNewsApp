@@ -1,1 +1,1 @@
-一个用来拉去新闻的app，使用jetpack库搭建，学习android使用
+一个用来拉取新闻的app，使用jetpack库搭建，学习android使用
