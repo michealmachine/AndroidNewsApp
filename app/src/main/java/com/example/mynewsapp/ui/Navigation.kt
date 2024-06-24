@@ -26,19 +26,26 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.mynewsapp.ui.screen.FavoriteNewsScreen
 
+// 定义一个 Composable 函数，用于管理应用的导航
 @Composable
 fun AppNavigation(viewModel: NewsViewModel) {
+    // 创建一个 NavController 实例，用于管理导航
     val navController = rememberNavController()
+    // 获取当前的导航堆栈条目
     val navBackStackEntry by navController.currentBackStackEntryAsState()
+    // 获取当前的路由
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // 定义一个列表，包含所有的导航项
     val navigationItems = listOf(
         NavigationBarItemModel("news", Icons.Default.Home, "News"),
         NavigationBarItemModel("favorites", Icons.Default.Favorite, "Favorites"),
         NavigationBarItemModel("settings", Icons.Default.Settings, "Settings")
     )
 
+    // 创建一个 Box 布局，用于包含 NavHost 和 Column
     Box(modifier = Modifier.fillMaxSize()) {
+        // 创建一个 NavHost，用于管理导航
         NavHost(navController = navController, startDestination = "news") {
             composable("news") {
                 NewsScreen(navController, viewModel)
@@ -53,6 +60,7 @@ fun AppNavigation(viewModel: NewsViewModel) {
                 SettingScreen(viewModel)
             }
         }
+        // 创建一个 Column 布局，用于显示导航栏
         Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Bottom) {
             NavigationBar {
                 navigationItems.forEach { item ->
@@ -70,8 +78,9 @@ fun AppNavigation(viewModel: NewsViewModel) {
     }
 }
 
+// 定义一个数据类，用于表示导航项
 data class NavigationBarItemModel(
-    val route: String,
-    val icon: ImageVector,
-    val label: String
+    val route: String,  // 导航项的路由
+    val icon: ImageVector,  // 导航项的图标
+    val label: String  // 导航项的标签
 )

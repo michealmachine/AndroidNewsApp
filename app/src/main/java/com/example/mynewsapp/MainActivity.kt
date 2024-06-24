@@ -31,36 +31,24 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+// 使用 AndroidEntryPoint 注解，表示这个 Activity 是 Hilt 的入口点
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-
+    // 当 Activity 创建时调用此方法
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // 设置 Activity 的内容
         setContent {
+            // 使用自定义的主题
             MyNewsAppTheme {
+                // 通过 Hilt 获取 ViewModel 的实例
                 val viewModel: NewsViewModel = hiltViewModel()
+                // 设置导航
                 AppNavigation(viewModel = viewModel)
             }
-
         }
     }
-
 }
 
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    MyNewsAppTheme {
-        Greeting("Android")
-    }
-}

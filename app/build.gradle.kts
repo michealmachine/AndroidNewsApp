@@ -74,15 +74,15 @@ dependencies {
     kapt("com.google.dagger:hilt-android-compiler:2.46")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
-// Room
+    // Room
     implementation("androidx.room:room-runtime:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
 
-// Coil
+    // Coil
     implementation("io.coil-kt:coil-compose:2.4.0")
 
-// Retrofit and Gson
+    // Retrofit and Gson
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
@@ -91,10 +91,10 @@ dependencies {
 
     // Gson dependency
     implementation("com.google.code.gson:gson:2.8.8")
-// Material3
+    // Material3
     implementation("androidx.compose.material3:material3")
 
-// Navigation
+    // Navigation
     implementation("androidx.navigation:navigation-compose")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
     implementation("androidx.datastore:datastore-preferences:1.0.0")

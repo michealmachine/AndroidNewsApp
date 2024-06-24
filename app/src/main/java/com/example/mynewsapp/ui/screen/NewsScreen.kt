@@ -30,42 +30,55 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.mynewsapp.data.model.NewsEntity
 import com.example.mynewsapp.ui.NewsViewModel
+import com.example.mynewsapp.ui.NewsViewState
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewsScreen(navController: NavHostController, viewModel: NewsViewModel = hiltViewModel()) {
+    // 从 ViewModel 中获取 viewState
     val viewState by viewModel.viewState.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
+    // 创建一个状态用于显示 Dialog
+    var showDialog by remember { mutableStateOf(false) }
+    var dialogMessage by remember { mutableStateOf("") }
+    // 定义一个国家列表
     val countries = listOf("us", "gb", "fr", "cn", "jp")
 
+    // 当 ViewModel 中的 newsUpdateCount 发生变化时，显示一个 Dialog
     LaunchedEffect(Unit) {
         viewModel.newsUpdateCount.collectLatest { count ->
-            snackbarHostState.showSnackbar("Updated with $count new articles")
+            dialogMessage = "Updated with $count new articles"
+            showDialog = true
         }
     }
 
+    // 使用 Scaffold 创建一个带有顶部栏的布局
     Scaffold(
         topBar = {
+            // 顶部栏包含一个标题和两个图标按钮
             TopAppBar(
                 title = { Text("News") },
                 actions = {
+                    // 第一个图标按钮用于刷新新闻
                     IconButton(onClick = { viewModel.refreshNews() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }
+                    // 第二个图标按钮用于切换显示格式
                     IconButton(onClick = { viewModel.toggleDisplayFormat() }) {
                         Icon(
+                            // 根据 viewState.isGrid 的值，选择不同的图标
                             imageVector = if (viewState.isGrid) Icons.Default.List else Icons.Default.GridOn,
                             contentDescription = "Toggle Layout"
                         )
                     }
                 }
             )
-        },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState, snackbar = { data -> CustomSnackbar(data) }) }
+        }
     ) { paddingValues ->
+        // 创建一个列布局，用于显示新闻列表或者一个加载指示器
         Column(modifier = Modifier.padding(paddingValues)) {
-            // Country Selector
+            // 创建一个下拉菜单，用于选择国家
             var expanded by remember { mutableStateOf(false) }
             Box {
                 TextButton(onClick = { expanded = true }) {
@@ -76,8 +89,6 @@ fun NewsScreen(navController: NavHostController, viewModel: NewsViewModel = hilt
                     onDismissRequest = { expanded = false }
                 ) {
                     countries.forEach { country ->
-
-
                         DropdownMenuItem(text = { Text(text = country.uppercase()) }, onClick = {
                             viewModel.updateSelectedCountry(country)
                             expanded = false
@@ -86,6 +97,7 @@ fun NewsScreen(navController: NavHostController, viewModel: NewsViewModel = hilt
                 }
             }
 
+            // 创建一个文本输入框，用于搜索新闻
             TextField(
                 value = viewState.searchQuery,
                 onValueChange = { viewModel.updateSearchQuery(it) },
@@ -95,11 +107,13 @@ fun NewsScreen(navController: NavHostController, viewModel: NewsViewModel = hilt
                     .padding(16.dp)
             )
 
+            // 如果正在加载新闻，显示一个加载指示器
             if (viewState.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             } else {
+                // 如果已经加载完新闻，根据 viewState.isGrid 的值，选择不同的列表布局
                 if (viewState.isGrid) {
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
@@ -118,23 +132,30 @@ fun NewsScreen(navController: NavHostController, viewModel: NewsViewModel = hilt
                 }
             }
         }
+
+        // 显示 Dialog
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text("Notification") },
+                text = { Text(dialogMessage) },
+                confirmButton = {
+                    TextButton(onClick = { showDialog = false }) {
+                        Text("OK")
+                    }
+                }
+            )
+        }
     }
 }
 
-@Composable
-fun CustomSnackbar(data: SnackbarData) {
-    Snackbar(
-        modifier = Modifier.padding(16.dp),
-        contentColor = Color.Blue // 设置文字颜色
-    ) {
-        Text(text = data.visuals.message)
-    }
-}
-
+// 定义一个 Composable 函数，用于显示新闻项
 @Composable
 fun NewsItem(navController: NavHostController, article: NewsEntity, viewModel: NewsViewModel) {
+    // 创建两个状态，用于跟踪图片的加载状态
     var isLoading by remember { mutableStateOf(true) }
     var hasError by remember { mutableStateOf(false) }
+    // 创建一个 AsyncImagePainter 实例，用于加载图片
     val painter = rememberAsyncImagePainter(
         model = ImageRequest.Builder(LocalContext.current)
             .data(article.urlToImage)
@@ -149,8 +170,10 @@ fun NewsItem(navController: NavHostController, article: NewsEntity, viewModel: N
             hasError = false
         }
     )
+    // 创建一个动画，用于改变图片的透明度
     val alpha by animateFloatAsState(targetValue = if (isLoading) 0.5f else 1f)
 
+    // 创建一个卡片，用于显示新闻项
     Card(
         modifier = Modifier
             .padding(8.dp)
@@ -171,6 +194,7 @@ fun NewsItem(navController: NavHostController, article: NewsEntity, viewModel: N
                         .fillMaxSize()
                         .alpha(alpha)
                 )
+                // 如果正在加载图片，显示一个加载指示器
                 if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier
@@ -178,6 +202,7 @@ fun NewsItem(navController: NavHostController, article: NewsEntity, viewModel: N
                             .align(Alignment.Center)
                     )
                 }
+                // 如果加载图片失败，显示一个错误文本
                 if (hasError) {
                     Text(
                         text = "Image load failed",
@@ -186,6 +211,7 @@ fun NewsItem(navController: NavHostController, article: NewsEntity, viewModel: N
                     )
                 }
             }
+            // 显示新闻的标题
             Text(
                 text = article.title,
                 style = MaterialTheme.typography.bodySmall,
@@ -196,3 +222,5 @@ fun NewsItem(navController: NavHostController, article: NewsEntity, viewModel: N
         }
     }
 }
+
+

@@ -26,29 +26,37 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.mynewsapp.ui.NewsViewModel
 import androidx.compose.ui.platform.LocalContext
 
+// 使用 ExperimentalMaterial3Api 注解，表示我们正在使用实验性的 Material 3 API
 @OptIn(ExperimentalMaterial3Api::class)
+// 定义一个 Composable 函数，用于显示新闻详情
 @Composable
 fun NewsDetailScreen(navController: NavHostController, viewModel: NewsViewModel) {
+    // 从 ViewModel 中获取选中的新闻和收藏状态
     val selectedNews by viewModel.selectedNews.collectAsState()
     val context = LocalContext.current
     val isFavorite by viewModel.selectedNewsIsFavorite.collectAsState()
 
+    // 使用 Scaffold 创建一个带有顶部栏的布局
     Scaffold(
         topBar = {
+            // 顶部栏包含一个标题和两个图标按钮
             TopAppBar(
                 title = { Text("News Detail") },
                 navigationIcon = {
+                    // 当图标按钮被点击时，返回上一个页面
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
+                    // 当图标按钮被点击时，切换收藏状态
                     IconButton(onClick = {
                         selectedNews?.let {
                             viewModel.toggleFavorite(it)
                         }
                     }) {
                         Icon(
+                            // 根据收藏状态，选择不同的图标和描述
                             imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
                             tint = if (isFavorite) Color.Red else Color.Gray
@@ -58,6 +66,7 @@ fun NewsDetailScreen(navController: NavHostController, viewModel: NewsViewModel)
             )
         }
     ) { paddingValues ->
+        // 如果选中了新闻，显示新闻详情
         if (selectedNews != null) {
             Column(
                 modifier = Modifier
@@ -65,6 +74,7 @@ fun NewsDetailScreen(navController: NavHostController, viewModel: NewsViewModel)
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState())
             ) {
+                // 使用 AsyncImagePainter 加载图片
                 val painter = rememberAsyncImagePainter(selectedNews!!.urlToImage)
                 Image(
                     painter = painter,
@@ -74,6 +84,7 @@ fun NewsDetailScreen(navController: NavHostController, viewModel: NewsViewModel)
                         .fillMaxWidth()
                         .height(200.dp)
                 )
+                // 显示新闻的标题、作者、来源、发布时间、描述、内容和 URL
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = selectedNews!!.title,
@@ -119,12 +130,14 @@ fun NewsDetailScreen(navController: NavHostController, viewModel: NewsViewModel)
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
+                            // 当 URL 被点击时，打开浏览器查看新闻
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(selectedNews!!.url))
                             context.startActivity(intent)
                         }
                 )
             }
         } else {
+            // 如果没有选中新闻，显示一个提示文本
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(text = "No news selected")
             }
